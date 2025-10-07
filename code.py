@@ -1,5 +1,11 @@
 '''
-Aamukampa 
+=============================================================
+T 2 5  1 0   D i n g D o n g   C P y
+=============================================================
+https://github.com/infrapale/T2510_DingDong_CPy.git
+
+https://docs.circuitpython.org/en/stable/docs/index.html
+https://github.com/adafruit/awesome-circuitpython/blob/main/cheatsheet/CircuitPython_Cheatsheet.md
 https://learn.adafruit.com/mp3-playback-rp2040/pico-i2s-mp3 
 
 https://github.com/adafruit/circuitpython/issues/851
@@ -35,15 +41,27 @@ import math
 import adafruit_sdcard
 import storage
 
-uart = busio.UART(gpio.TX1_PIN, gpio.RX1_PIN, baudrate=9600)
-spi = busio.SPI(gpio.SD_CLK_PIN, gpio.SD_MOSI_PIN, gpio.SD_MISO_PIN)
-cs = digitalio.DigitalInOut(gpio.SD_CS_PIN)
-sdcard = adafruit_sdcard.SDCard(spi, cs)
-vfs = storage.VfsFat(sdcard)
-storage.mount(vfs, "/sd")
+from files import print_sd_directory  
+
+from uart_com import UCom  
 
 play_wave = True
 use_i2s = True
+sd_card_is_ok = False
+
+# uart = busio.UART(gpio.TX1_PIN, gpio.RX1_PIN, baudrate=9600)
+try:
+    spi = busio.SPI(gpio.SD_CLK_PIN, gpio.SD_MOSI_PIN, gpio.SD_MISO_PIN)
+    cs = digitalio.DigitalInOut(gpio.SD_CS_PIN)
+    sdcard = adafruit_sdcard.SDCard(spi, cs)
+    vfs = storage.VfsFat(sdcard)
+    storage.mount(vfs, "/sd")
+    sd_card_is_ok = True
+    print("SD Card mounted")
+except Exception as e:
+    print("SD Card mount failed", e)    
+    
+
 
 try:
     from audioio import AudioOut
@@ -53,6 +71,7 @@ except ImportError:
     except ImportError:
         pass  # not always supported by every board!
 
+ucom = UCom(gpio.TX0_PIN, gpio.RX0_PIN, 9600)
 
 i2c_en = digitalio.DigitalInOut(gpio.EN_I2C_PIN)
 i2c_en.direction = digitalio.Direction.OUTPUT
@@ -66,34 +85,6 @@ if use_i2s:
     audio = audiobusio.I2SOut(gpio.I2S_BCLK, gpio.I2S_WS, gpio.I2S_DOUT)
 else:   
     audio = AudioOut(gpio.PWM7B_PIN)
-
-def print_directory(path, tabs=0):
-    for file in os.listdir(path):
-        if file == "?":
-            continue  # Issue noted in Learn
-        stats = os.stat(path + "/" + file)
-        filesize = stats[6]
-        isdir = stats[0] & 0x4000
-
-        if filesize < 1000:
-            sizestr = str(filesize) + " by"
-        elif filesize < 1000000:
-            sizestr = "%0.1f KB" % (filesize / 1000)
-        else:
-            sizestr = "%0.1f MB" % (filesize / 1000000)
-
-        prettyprintname = ""
-        for _ in range(tabs):
-            prettyprintname += "   "
-        prettyprintname += file
-        if isdir:
-            prettyprintname += "/"
-        print('{0:<40} Size: {1:>10}'.format(prettyprintname, sizestr))
-
-        # recursively print directory contents
-        if isdir:
-            print_directory(path + "/" + file, tabs + 1)
-
 
 def play_audio(file_name):
     if play_wave:
@@ -119,26 +110,33 @@ def play_audio(file_name):
             print("mp3 failed", file_name)
 
 
-
-print("Files on filesystem:")
-print("====================")
-print_directory("/sd")
-
-
+if sd_card_is_ok:
+    print_sd_directory()
+main_state = 0
+main_timeout = time.monotonic()
 
 while 1:
-    if play_wave:
-        print("Playing wave")
-        play_audio("/sd/chime_big_ben.wav")
-    else:
-        print("Playing mp3")
-        play_audio("/sd/Ambulance.mp3")
-    time.sleep(5.0)
+    if main_state== 0:
+        if sd_card_is_ok:
+            main_state = 1
+        else:
+            print("No SD Card")
+            main_timeout = time.monotonic() + 5.0
+            main_state = 10
+    elif main_state== 1:
+        if play_wave:
+            print("Playing wave")
+            play_audio("/sd/chime_big_ben.wav")
+        else:
+            print("Playing mp3")
+            play_audio("/sd/Ambulance.mp3")
+        main_state = 10
+        main_timeout = time.monotonic() + 5.0
+    elif main_state== 10:
+        if time.monotonic() > main_timeout:
+            ucom.send_get_home_state()
+            main_state = 20
+    elif main_state== 20:
+        print("Looping")
+        main_state = 0 
 
-
-
-             
-    
-'''
-file_name = "/sd/chime_big_ben_2.wav"
-'''
