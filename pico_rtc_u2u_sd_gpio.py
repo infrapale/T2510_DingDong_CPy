@@ -30,6 +30,9 @@ RTC_CLK_PIN  = board.GP21
 RGB1_PIN     = board.GP20
 RGB2_PIN     = board.GP22
 
+I2S_BCLK     =  board.GP10
+I2S_WS       =  board.GP11
+I2S_DOUT     =  board.GP12
 
 
 '''
