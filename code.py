@@ -123,6 +123,7 @@ while 1:
             print("No SD Card")
             main_timeout = time.monotonic() + 5.0
             main_state = 10
+
     elif main_state== 1:
         if play_wave:
             print("Playing wave")
@@ -131,12 +132,33 @@ while 1:
             print("Playing mp3")
             play_audio("/sd/Ambulance.mp3")
         main_state = 10
-        main_timeout = time.monotonic() + 5.0
+
     elif main_state== 10:
-        if time.monotonic() > main_timeout:
-            ucom.send_get_home_state()
-            main_state = 20
+        ucom.send_get_home_state()
+        main_timeout = time.monotonic() + 5.0
+        main_state = 20
+
     elif main_state== 20:
-        print("Looping")
-        main_state = 0 
+        msg = ucom.read_msg()
+        if msg != "":
+            print("Received:", msg)
+            if ucom.msg_frame_is_ok():
+                print("Frame OK")
+                ucom.parse_msg()
+                print(ucom.parsed)
+            else:
+                print("Frame not OK")
+            main_state = 30
+        elif time.monotonic() > main_timeout:
+            print("Timeout waiting for message")
+            main_state = 100
+    elif main_state== 30:
+        main_state = 100
+    elif main_state== 100:
+        main_timeout = time.monotonic() + 5.0
+        main_state = 110
+    elif main_state== 110:
+        if time.monotonic() > main_timeout:     
+            print("Looping")
+            main_state = 0 
 

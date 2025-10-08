@@ -56,33 +56,35 @@ class UCom:
         self.uart.write(barr)
 
     def msg_frame_is_ok(self):
-        print('msg_frame_is_ok? ',self.msg)
         begin = self.msg.find('<')
         end = self.msg.find('>')
         is_ok = False
         if begin >=0 and end > 0:
             self.msg = self.msg[begin+1:end]
+            #print('msg_frame_is_ok! ',self.msg)
             is_ok = True
+        else:    
+            #print('msg_frame not ok! ',self.msg)    
+            is_ok = False
         return is_ok
     
     def parse_msg(self):
         # C1Tg:2023;09;21;19;50
         l = len(self.msg)
-        print(l)
-        if l == 7:
+        #print(l)
+        if l == 6:
             self.parsed['module'] = self.msg[0]
             self.parsed['maddr'] = self.msg[1]
             self.parsed['function'] = self.msg[2]
             self.parsed['index'] = self.msg[3]
-            self.parsed['index'] = self.msg[4]
-            self.parsed['action'] = self.msg[5]
-            self.parsed['data'] = self.msg[6]
+            self.parsed['action'] = self.msg[4]
+            self.parsed['data'] = self.msg[5]
                 
     def send_dict_msg(self, sdata ):
-        print(sdata)
+        #print(sdata)
         buff = '<' + sdata['module'] + sdata['maddr'] + sdata['function'] + sdata['index'] + \
             sdata['action'] + sdata['data'] + '>\r\n'
-        print(buff)
+        # print(buff)
         self.send_msg(buff)    
     
     def send_get_home_state(self):
