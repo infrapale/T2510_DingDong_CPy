@@ -46,10 +46,10 @@ from files import print_sd_directory
 import data as D
 from uart_com import UCom
 from DingDong import DingDong
-
-play_wave = True
-use_i2s = True
-sd_card_is_ok = False
+from Event import Event
+# play_wave = True
+# use_i2s = True
+# sd_card_is_ok = False
 
 # uart = busio.UART(gpio.TX1_PIN, gpio.RX1_PIN, baudrate=9600)
 try:
@@ -64,16 +64,16 @@ except Exception as e:
     print("SD Card mount failed", e)    
     
 
-
-try:
-    from audioio import AudioOut
-except ImportError:
-    try:
-        from audiopwmio import PWMAudioOut as AudioOut
-    except ImportError:
-        pass  # not always supported by every board!
+# try:
+#     from audioio import AudioOut
+# except ImportError:
+#     try:
+#         from audiopwmio import PWMAudioOut as AudioOut
+#     except ImportError:
+#         pass  # not always supported by every board!
 
 ucom = UCom(gpio.TX0_PIN, gpio.RX0_PIN, 9600)
+event = Event()
 dingdong = DingDong()
 
 i2c_en = digitalio.DigitalInOut(gpio.EN_I2C_PIN)
@@ -84,56 +84,25 @@ i2c_en.value = 1
 i2c_bus = busio.I2C(gpio.I2C0_SCL_PIN, gpio.I2C0_SDA_PIN, frequency=100000)
 i2c1 = busio.I2C(gpio.I2C1_SCL_PIN, gpio.I2C1_SDA_PIN, frequency=1000000)
 
-if use_i2s:
-    audio = audiobusio.I2SOut(gpio.I2S_BCLK, gpio.I2S_WS, gpio.I2S_DOUT)
-else:   
-    audio = AudioOut(gpio.PWM7B_PIN)
-
-def play_audio(file_name):
-    if play_wave:
-        try:
-            with open(file_name, "rb") as f:
-                wave = audiocore.WaveFile(f)
-                print("playing", file_name)
-                audio.play(wave)
-                while audio.playing:
-                    pass
-        except:
-            print("waw failed", file_name)  
-    else:
-        #audio = audiobusio.I2SOut(gpio.I2S_BCLK, gpio.I2S_WS, gpio.I2S_DOUT)
-        try:
-            with open(file_name, "rb") as f:
-                print("mp3 play", file_name)
-                mp3 = audiomp3.MP3Decoder(f)
-                audio.play(mp3)
-                while audio.playing:
-                    pass
-        except:
-            print("mp3 failed", file_name)
-
-
-if sd_card_is_ok:
+if D.sd_card_is_ok:
     print_sd_directory()
 main_state = 0
 main_timeout = time.monotonic()
 
 while 1:
-    dingdong.state_machine()
-    dingdong.print_status()
-    dingdong.set_home_mode(D.MODE_AT_HOME)
-    dingdong.state_machine()
-    dingdong.print_status()
-    dingdong.set_zone_status(D.ZONE_VA, 1)
-    dingdong.state_machine()
-    dingdong.print_status()
+    event.state_machine()    
+    event.print_status()
+    event.set_home_mode(D.MODE_AT_HOME)
+    event.state_machine()
+    event.print_status()
+    event.set_zone_status(D.ZONE_VA, 1)
+    event.state_machine()
+    event.print_status()
     sys.exit(0)
-
-
 
 while 1:
     if main_state== 0:
-        if sd_card_is_ok:
+        if D.sd_card_is_ok:
             main_state = 1
         else:
             print("No SD Card")

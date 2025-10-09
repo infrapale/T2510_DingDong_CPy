@@ -14,10 +14,9 @@ ZONE_RANTA  = const(2)
 ZONE_VA     = const(3)
 ZONE_LA     = const(4)
 
-STATE_UNDEFINED = const(0)
-STATE_IDLE      = const(1)  
-STATE_ALARM     = const(2)
-STATE_SIGNAL    = const(3)
+play_wave = True
+use_i2s = True
+sd_card_is_ok = False
 
 
 mode = {'index': MODE_UNDEFINED, 'changed':True}
