@@ -58,23 +58,15 @@ try:
     sdcard = adafruit_sdcard.SDCard(spi, cs)
     vfs = storage.VfsFat(sdcard)
     storage.mount(vfs, "/sd")
-    sd_card_is_ok = True
+    D.sd_card_is_ok = True
     print("SD Card mounted")
 except Exception as e:
-    print("SD Card mount failed", e)    
+    print("SD Card mount failed", e)  
+    D.sd_card_is_ok = False  
     
-
-# try:
-#     from audioio import AudioOut
-# except ImportError:
-#     try:
-#         from audiopwmio import PWMAudioOut as AudioOut
-#     except ImportError:
-#         pass  # not always supported by every board!
-
 ucom = UCom(gpio.TX0_PIN, gpio.RX0_PIN, 9600)
 event = Event()
-dingdong = DingDong()
+# dingdong = DingDong()
 
 i2c_en = digitalio.DigitalInOut(gpio.EN_I2C_PIN)
 i2c_en.direction = digitalio.Direction.OUTPUT
@@ -86,21 +78,26 @@ i2c1 = busio.I2C(gpio.I2C1_SCL_PIN, gpio.I2C1_SDA_PIN, frequency=1000000)
 
 if D.sd_card_is_ok:
     print_sd_directory()
+
 main_state = 0
 main_timeout = time.monotonic()
 
-while 1:
+while 0:
     event.state_machine()    
     event.print_status()
     event.set_home_mode(D.MODE_AT_HOME)
     event.state_machine()
     event.print_status()
-    event.set_zone_status(D.ZONE_VA, 1)
-    event.state_machine()
-    event.print_status()
+    # event.set_zone_status(D.ZONE_PIHA, 1)
+    event.set_zone_status(D.ZONE_RANTA, 1)
+    for i in range(10):
+        event.state_machine()
+        event.print_status()
+        time.sleep(1)
     sys.exit(0)
 
 while 1:
+    event.state_machine()
     if main_state== 0:
         if D.sd_card_is_ok:
             main_state = 1
@@ -110,12 +107,7 @@ while 1:
             main_state = 10
 
     elif main_state== 1:
-        if play_wave:
-            print("Playing wave")
-            play_audio("/sd/chime_big_ben.wav")
-        else:
-            print("Playing mp3")
-            play_audio("/sd/Ambulance.mp3")
+        event.set_home_mode(D.MODE_AT_HOME)
         main_state = 10
 
     elif main_state== 10:
@@ -131,6 +123,10 @@ while 1:
                 print("Frame OK")
                 ucom.parse_msg()
                 print(ucom.parsed)
+                if (event.get_zone_status(D.MODE_AT_HOME) == 1 ): 
+                    event.set_zone_status(D.ZONE_RANTA, 0)
+                else:
+                    event.set_zone_status(D.ZONE_RANTA, 1)
             else:
                 print("Frame not OK")
             main_state = 30

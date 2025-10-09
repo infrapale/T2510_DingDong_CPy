@@ -37,7 +37,7 @@ class DingDong:
     def __init__(self):       
         self.timeout = time.monotonic()
 
-    def play_audio(file_name):
+    def play_audio(self, file_name):
         if file_name.lower().endswith('.wav'):
             try:
                 with open(file_name, "rb") as f:

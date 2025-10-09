@@ -8,12 +8,15 @@ import board
 import pico_rtc_u2u_sd_gpio as gpio
 from micropython import const
 
-
+from DingDong import DingDong
 
 STATE_UNDEFINED = const(0)
 STATE_IDLE      = const(1)  
 STATE_ALARM     = const(2)
 STATE_SIGNAL    = const(3)
+
+
+dingdong = DingDong()
 
 
 class Event:
@@ -30,8 +33,8 @@ class Event:
 
         self.melody = [
             [D.ZONE_UNDEF,  0.0,    "/sd/chime_big_ben.wav"],
-            [D.ZONE_PIHA,   10.0,   "/sd/chime_big_ben.wav"], 
-            [D.ZONE_RANTA,  10.0,   "/sd/chime_big_ben.wav"],
+            [D.ZONE_PIHA,   2.0,    "/sd/Airhorn.mp3"], 
+            [D.ZONE_RANTA,  20.0,   "/sd/Ambulance.mp3"],
             [D.ZONE_VA,     20.0,   "/sd/chime_big_ben.wav"],
             [D.ZONE_LA,     20.0,   "/sd/chime_big_ben.wav"]
         ]
@@ -65,6 +68,9 @@ class Event:
         self.set_zone_active_status(zone)
         print("Zone", zone, "status set to", status)    
     
+    def get_zone_status(self, zone):
+        return self.zone_status[zone]
+
     def print_status(self):
         print("--- Event status ---")
         print("State:", self.state, " Home mode:", self.home_mode)
@@ -87,13 +93,19 @@ class Event:
         elif self.state == STATE_ALARM:
                 self.timeout = time.monotonic() + self.melody[self.alarm_zone][1]
                 print("Alarm timeout")
+                print("Playing melody:", self.melody[self.alarm_zone][2])
+                dingdong.play_audio(self.melody[self.alarm_zone][2])
                 self.state = STATE_SIGNAL
 
         elif  self.state == STATE_SIGNAL:
-           if time.monotonic() > self.timeout:
+            if time.monotonic() > self.timeout:
                 print("Signal timeout")
-                self.zone_prev_active_status[self.alarm_zonezone] = 0
+                self.zone_prev_active_status[self.alarm_zone] = 0
                 self.state = STATE_IDLE           
+            else:
+                print("Playing melody:", self.melody[self.alarm_zone][2])
+                dingdong.play_audio(self.melody[self.alarm_zone][2])
+
             
  
 
