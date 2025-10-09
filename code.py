@@ -21,6 +21,7 @@ https://learn.adafruit.com/microcontroller-compatible-audio-file-conversion
 
 '''
 import os
+import sys
 import audiocore
 #from audiocore import RawSample
 #from audiocore import WaveFile
@@ -42,8 +43,9 @@ import adafruit_sdcard
 import storage
 
 from files import print_sd_directory  
-
-from uart_com import UCom  
+import data as D
+from uart_com import UCom
+from DingDong import DingDong
 
 play_wave = True
 use_i2s = True
@@ -72,6 +74,7 @@ except ImportError:
         pass  # not always supported by every board!
 
 ucom = UCom(gpio.TX0_PIN, gpio.RX0_PIN, 9600)
+dingdong = DingDong()
 
 i2c_en = digitalio.DigitalInOut(gpio.EN_I2C_PIN)
 i2c_en.direction = digitalio.Direction.OUTPUT
@@ -114,6 +117,19 @@ if sd_card_is_ok:
     print_sd_directory()
 main_state = 0
 main_timeout = time.monotonic()
+
+while 1:
+    dingdong.state_machine()
+    dingdong.print_status()
+    dingdong.set_home_mode(D.MODE_AT_HOME)
+    dingdong.state_machine()
+    dingdong.print_status()
+    dingdong.set_zone_status(D.ZONE_VA, 1)
+    dingdong.state_machine()
+    dingdong.print_status()
+    sys.exit(0)
+
+
 
 while 1:
     if main_state== 0:
