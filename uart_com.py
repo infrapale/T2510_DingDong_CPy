@@ -1,5 +1,16 @@
 '''
-    
+
+    Get Decoded Message:
+    <A1D1?->
+     \\\\\\______ value, message (optional ='-')
+      \\\\\______ action get    (set: '=' get: '?' reply: ':')
+       \\\\______ index         '1' dummy for future use
+        \\\______ function      'D' Get Decoded Message
+         \\______ module_addr   '1' 
+           \_____ module_tag    'A' Gateway
+
+
+
     Get Alarm Status:
     <G1A0?x>
      \\\\\\______ value, message (optional)
@@ -30,6 +41,7 @@ import pico_rtc_u2u_sd_gpio as gpio
 
 from micropython import const
 
+MODULE_69 = 'A'  # RFM69 Module Address
 
 
 CONST_MAX_MSG_LEN = const(32)
@@ -38,12 +50,10 @@ class UCom:
     def __init__(self, tx_pin, rx_pin, baudrate ):        
         self.uart = busio.UART(tx_pin, rx_pin, baudrate=baudrate, timeout=10)
         self.msg = ""
-        self.parsed             = {'module': 'M', 'maddr': '1', 'function':'X', 'index': '0', 'action': '-', 'data': ''}
-        self.get_home_state     = {'module': 'G', 'maddr': '1', 'function':'H', 'index': '0', 'action': '?', 'data': '-'}
-        self.get_alarm_state    = {'module': 'G', 'maddr': '1', 'function':'A', 'index': '0', 'action': '?', 'data': '-'}
-        self.reply_home_state   = {'module': 'G', 'maddr': '1', 'function':'H', 'index': '0', 'action': ':', 'data': '-'}
-        self.reply_alarm_state  = {'module': 'G', 'maddr': '1', 'function':'A', 'index': '0', 'action': ':', 'data': '-'}
-
+        self.parsed             = {'module': 'X', 'maddr': '1', 'function':'X', 'index': '0', 'action': '-', 'data': ''}
+        self.get_decoded_msg    = {'module': MODULE_69, 'maddr': '1', 'function':'D', 'index': '1', 'action': '?', 'data': '-'}
+        self.get_raw_msg        = {'module': MODULE_69, 'maddr': '1', 'function':'W', 'index': '1', 'action': '?', 'data': '-'}
+ 
     def read_msg(self):
         self.msg = "" 
         if self.uart.in_waiting > 0: 
@@ -88,9 +98,11 @@ class UCom:
         self.send_msg(buff)    
     
     def send_get_home_state(self):
-        self.send_dict_msg(self.get_home_state)
+        pass
+        #self.send_dict_msg(self.get_home_state)
 
     def send_get_alarm_state(self):
-        self.send_dict_msg(self.get_alarm_state)
+        pass
+        #cself.send_dict_msg(self.get_alarm_state)
     
         

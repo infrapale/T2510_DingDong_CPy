@@ -97,6 +97,21 @@ while 0:
     sys.exit(0)
 
 while 1:
+    ucom.send_dict_msg(ucom.get_decoded_msg)
+    time.sleep(0.5)
+    msg = ucom.read_msg()
+    if msg != "":
+        print("Received:", msg)
+        if ucom.msg_frame_is_ok():
+            print("Frame OK")
+            ucom.parse_msg()
+            print(ucom.parsed)
+        else:
+            print("Frame not OK")
+        main_state = 30
+
+
+while 1:
     event.state_machine()
     if main_state== 0:
         if D.sd_card_is_ok:

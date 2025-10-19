@@ -50,7 +50,10 @@ class UartCom:
             ':' + sdata['data'] + '>\r\n'
         self.send_msg(buff)    
         print(buff)
-         
+
+    def send_get_decoded_msg(self):
+        self.send_dict_msg(self.get_decoded_msg)
+           
 '''
 <C1TS:123>
 <C1TS:2023;09;21;19;50>
