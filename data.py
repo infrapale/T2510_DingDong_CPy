@@ -20,6 +20,8 @@ sd_card_is_ok = False
 
 
 mode = {'index': MODE_UNDEFINED, 'changed':True}
+rfm_gateway = {'module_tag':'G', 'module_addr':'1', 'function': 'O', 'index': '1'}
+   
 date_time = time.struct_time((2024, 3, 28, 12, 0, 0, 6, -1, -1))
 
 #hms = {'hour':0,'minute':0,'second':0}

@@ -100,16 +100,19 @@ while 1:
     ucom.send_dict_msg(ucom.get_decoded_msg)
     time.sleep(0.5)
     msg = ucom.read_msg()
-    if msg != "":
+    if len(msg) > 4:
         print("Received:", msg)
         if ucom.msg_frame_is_ok():
             print("Frame OK")
             ucom.parse_msg()
-            print(ucom.parsed)
+            if ucom.received_msg['is_ok']:  
+                if ucom.msg_id_is_ok(ucom.get_decoded_msg, ucom.received_msg['module_id']):
+                    print("ID OK")
+                    print(ucom.received_msg)
         else:
-            print("Frame not OK")
-        main_state = 30
-
+            pass
+            # print("Frame not OK")
+        
 
 while 1:
     event.state_machine()

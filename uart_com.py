@@ -50,10 +50,12 @@ class UCom:
     def __init__(self, tx_pin, rx_pin, baudrate ):        
         self.uart = busio.UART(tx_pin, rx_pin, baudrate=baudrate, timeout=10)
         self.msg = ""
+        # self.parsed             = {'module': 'X', 'maddr': '1', 'function':'X', 'index': '0', 'action': '-', 'data': ''}
         self.parsed             = {'module': 'X', 'maddr': '1', 'function':'X', 'index': '0', 'action': '-', 'data': ''}
         self.get_decoded_msg    = {'module': MODULE_69, 'maddr': '1', 'function':'D', 'index': '1', 'action': '?', 'data': '-'}
         self.get_raw_msg        = {'module': MODULE_69, 'maddr': '1', 'function':'W', 'index': '1', 'action': '?', 'data': '-'}
- 
+        self.received_msg       = {'module_id': 'XXXX', 'zone': 'YYYY', 'sensor': 'ZZZZ', 'value': 0, 'is_ok': True}
+
     def read_msg(self):
         self.msg = "" 
         if self.uart.in_waiting > 0: 
@@ -69,26 +71,42 @@ class UCom:
         begin = self.msg.find('<')
         end = self.msg.find('>')
         is_ok = False
-        if begin >=0 and end > 0:
+        if begin >=0 and end > 4:
             self.msg = self.msg[begin+1:end]
-            #print('msg_frame_is_ok! ',self.msg)
+            print('msg_frame_is_ok! ',self.msg)
             is_ok = True
         else:    
-            #print('msg_frame not ok! ',self.msg)    
+            # print('msg_frame not ok! ',self.msg)    
             is_ok = False
         return is_ok
     
+    def msg_id_is_ok(self, expected_module, received_id_str):
+        is_ok = False
+        if (expected_module['module'] == received_id_str[0] and 
+            expected_module['maddr'] == received_id_str[1] and  
+            expected_module['function'] == received_id_str[2] and 
+            expected_module['index'] == received_id_str[3]):              
+            is_ok = True
+        return is_ok
+
+
+
     def parse_msg(self):
         # C1Tg:2023;09;21;19;50
         l = len(self.msg)
-        #print(l)
-        if l == 6:
-            self.parsed['module'] = self.msg[0]
-            self.parsed['maddr'] = self.msg[1]
-            self.parsed['function'] = self.msg[2]
-            self.parsed['index'] = self.msg[3]
-            self.parsed['action'] = self.msg[4]
-            self.parsed['data'] = self.msg[5]
+        split_msg = self.msg.split(';')
+        print(l)
+        try:
+            self.received_msg['module_id'] = split_msg[0]
+            self.received_msg['zone'] = split_msg[1]
+            self.received_msg['sensor'] = split_msg[2]
+            self.received_msg['value'] = split_msg[3]
+            self.received_msg['is_ok'] = True
+        except Exception as e:
+            print("Parse error:", e)
+            self.received_msg['is_ok'] = False
+            
+        print('Parsed:', self.received_msg)
                 
     def send_dict_msg(self, sdata ):
         #print(sdata)
